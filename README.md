@@ -1,9 +1,9 @@
 # disk_scheduling
-# 🚀 Disk Scheduling Simulator
+#  Disk Scheduling Simulator
 
 An interactive real-time web application that simulates and visualizes how various disk scheduling algorithms operate under different conditions. Built using HTML, CSS, and JavaScript, this project helps students, educators, and developers understand disk I/O management and scheduling strategies.
 
-## 🎯 Project Purpose
+##  Project Purpose
 
 The goal of this simulator is to:
 - Visualize how disk head movement works
@@ -14,29 +14,29 @@ The goal of this simulator is to:
 
 ---
 
-## 🧠 Key Features
+##  Key Features
 
-- ✅ Real-time disk head animation
-- 🔁 Supports scheduling algorithms:
+- Real-time disk head animation
+   Supports scheduling algorithms:
   - FCFS (First-Come, First-Served)
   - SSTF (Shortest Seek Time First)
   - SCAN and LOOK
-- 📈 Displays live metrics:
+-  Displays live metrics:
   - Total head movement
   - Average seek time
   - Request queue size
   - Throughput
-- 🎛️ Simulation controls:
+-  Simulation controls:
   - Start, Pause, Step, Reset
   - Request Density slider
   - Simulation Speed control
-- 🌙 Light/Dark mode toggle
-- 📤 Simulated Export & Update Model buttons for future integration
-- 🔄 Algorithm prediction based on request conditions
+-  Light/Dark mode toggle
+-  Simulated Export & Update Model buttons for future integration
+-  Algorithm prediction based on request conditions
 
 ---
 
-## 🖥️ Technologies Used
+##  Technologies Used
 
 - HTML5 for structure
 - CSS3 for styling and responsiveness
@@ -46,7 +46,7 @@ The goal of this simulator is to:
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```plaintext
 pro1.html       # Main HTML structure
