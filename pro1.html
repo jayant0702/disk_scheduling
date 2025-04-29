@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Disk Scheduling Simulator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Theme Colors */
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4cc9f0;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --border-color: #e9ecef;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            
+            /* Sizes and Spacing */
+            --header-height: 70px;
+            --border-radius-sm: 6px;
+            --border-radius-md: 10px;
+            --border-radius-lg: 16px;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            
+            /* Transitions */
+            --transition-fast: 0.2s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
+        }
+
+        /* Dark Theme Colors */
+        .dark-theme {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --text-primary: #f8f9fa;
+            --text-secondary: #adb5bd;
+            --border-color: #2d2d2d;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color var(--transition-normal), color var(--transition-normal);
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            line-height: 1.3;
+        }
+
+        /* App Container */
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Styles */
+        header {
+            height: var(--header-height);
+            background-color: var(--bg-secondary);
+            box-shadow: 0 2px 10px var(--shadow-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 var(--spacing-xl);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: background-color var(--transition-normal);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .logo h1 span {
+            color: var(--primary-color);
+        }
+
+        /* Theme Toggle Switch */
+        .theme-toggle {
+            position: relative;
+        }
+
+        .theme-switch {
+            opacity: 0;
+            position: absolute;
+        }
+
+        .theme-switch-label {
+            background-color: #111;
+            border-radius: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px;
+            position: relative;
+            height: 26px;
+            width: 50px;
+            transform: scale(1.2);
+        }
+
+        .theme-switch-label .fa-moon {
+            color: #f1c40f;
+            font-size: 12px;
+        }
+
+        .theme-switch-label .fa-sun {
+            color: #f39c12;
+            font-size: 12px;
+        }
+
+        .theme-switch-label .ball {
+            background-color: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            height: 22px;
+            width: 22px;
+            transform: translateX(0px);
+            transition: transform var(--transition-fast);
+        }
+
+        .theme-switch:checked + .theme-switch-label .ball {
+            transform: translateX(24px);
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: var(--spacing-lg);
+            padding: var(--spacing-lg);
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Dashboard Layout */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: auto auto auto;
+            gap: var(--spacing-lg);
+        }
+
+        .visualization-section {
+            grid-column: 1 / -1;
+        }
+
+        /* Section Styles */
+        section {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 4px 12px var(--shadow-color);
+            padding: var(--spacing-lg);
+            transition: background-color var(--transition-normal), box-shadow var(--transition-normal);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+
+        .section-controls {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        /* Visualization Styles */
+        .visualization-container {
+            position: relative;
+            height: 150px;
+        }
+
+        .disk-track {
+            position: relative;
+            height: 10px;
+            background-color: var(--border-color);
+            border-radius: 5px;
+            margin: 50px 0;
+        }
+
+        .disk-head {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            top: -5px;
+            left: 0;
+            transform: translateX(-50%);
+            transition: left var(--transition-normal);
+            z-index: 2;
+            box-shadow: 0 0 10px var(--primary-color);
+        }
+
+        .track-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: var(--spacing-sm);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .request-queue {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .request-indicator {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            top: 50px;
+            transform: translate(-50%, -50%);
+            transition: background-color var(--transition-fast);
+        }
+
+        .request-indicator.processed {
+            background-color: var(--success-color);
+            opacity: 0.7;
+        }
+
+        /* Metrics Section */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+        }
+
+        .metric-card {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px var(--shadow-color);
+        }
+
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+        }
+
+        .metric-content h3 {
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            color: var(--text-secondary);
+        }
+
+        .metric-content p {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Algorithm Section */
+        .algorithm-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+        }
+
+        .algorithm-card {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-md);
+            border: 2px solid transparent;
+            transition: border-color var(--transition-fast), transform var(--transition-fast);
+            cursor: pointer;
+        }
+
+        .algorithm-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .algorithm-card.active {
+            border-color: var(--primary-color);
+        }
+
+        .algorithm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .algorithm-header h3 {
+            font-size: 1.1rem;
+        }
+
+        .algorithm-icon {
+            width: 30px;
+            height: 30px;
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .algorithm-description p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .confidence-bar {
+            height: 6px;
+            background-color: var(--border-color);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .confidence-level {
+            height: 100%;
+            background-color: var(--primary-color);
+            border-radius: 3px;
+            transition: width var(--transition-normal);
+        }
+
+        .confidence-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Details Section */
+        .details-container {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-md);
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md) var(--spacing-lg);
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .detail-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 4px 12px var(--shadow-color);
+            padding: var(--spacing-lg);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+            height: fit-content;
+            transition: background-color var(--transition-normal);
+        }
+
+        .control-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .control-settings {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .setting-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        .setting-group label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .range-control {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+
+        .range-control input {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .range-control input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .range-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            width: 60px;
+            text-align: right;
+        }
+
+        .advanced-controls {
+            display: flex;
+            gap: var(--spacing-md);
+        }
+
+        .simulation-stats {
+            background-color: var(--bg-primary);
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-md);
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .stat-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Button Styles */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+            border-radius: var(--border-radius-md);
+            font-weight: 500;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            border: none;
+            outline: none;
+            gap: var(--spacing-sm);
+        }
+
+        .btn i {
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(67, 97, 238, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(67, 97, 238, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1rem;
+            padding: var(--spacing-xs);
+            border-radius: var(--border-radius-sm);
+            transition: all var(--transition-fast);
+        }
+
+        .btn-icon:hover {
+            color: var(--primary-color);
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--transition-normal), visibility var(--transition-normal);
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius-lg);
+            width: 90%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transform: translateY(20px);
+            transition: transform var(--transition-normal);
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color var(--transition-fast);
+        }
+
+        .close-modal:hover {
+            color: var(--danger-color);
+        }
+
+        .modal-body {
+            padding: var(--spacing-lg);
+        }
+
+        /* Expanded Visualization */
+        .expanded-visualization {
+            position: relative;
+            height: 300px;
+        }
+
+        .disk-track.expanded {
+            height: 16px;
+            margin: 100px 0;
+        }
+
+        .request-queue.expanded {
+            height: 200px;
+        }
+
+        .visualization-legend {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-xl);
+            margin-top: var(--spacing-lg);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        .legend-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-left: 4px solid var(--primary-color);
+            border-radius: var(--border-radius-md);
+            padding: 16px;
+            width: 300px;
+            box-shadow: 0 4px 12px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+        }
+
+        .toast.success {
+            border-left-color: var(--success-color);
+        }
+
+        .toast.warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .toast.error {
+            border-left-color: var(--danger-color);
+        }
+
+        .toast-icon {
+            font-size: 1.2rem;
+        }
+
+        .toast.success .toast-icon {
+            color: var(--success-color);
+        }
+
+        .toast.warning .toast-icon {
+            color: var(--warning-color);
+        }
+
+        .toast.error .toast-icon {
+            color: var(--danger-color);
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .toast-message {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 4px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        /* Responsive Styles */
+        @media (max-width: 1200px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .algorithm-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 0 var(--spacing-md);
+            }
+            
+            main {
+                padding: var(--spacing-md);
+                gap: var(--spacing-md);
+            }
+            
+            .dashboard {
+                gap: var(--spacing-md);
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .algorithm-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .advanced-controls {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo h1 {
+                font-size: 1.2rem;
+            }
+            
+            .section-header h2 {
+                font-size: 1.1rem;
+            }
+            
+            .btn span {
+                display: none;
+            }
+            
+            .btn i {
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header Section -->
+        <header>
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-hdd"></i>
+                </div>
+                <h1>DiskSim<span>Pro</span></h1>
+            </div>
+            <div class="theme-toggle">
+                <input type="checkbox" id="theme-switch" class="theme-switch">
+                <label for="theme-switch" class="theme-switch-label">
+                    <i class="fas fa-moon"></i>
+                    <i class="fas fa-sun"></i>
+                    <span class="ball"></span>
+                </label>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <div class="dashboard">
+                <!-- Visualization Section -->
+                <section class="visualization-section">
+                    <div class="section-header">
+                        <h2>Disk Head Movement</h2>
+                        <div class="section-controls">
+                            <button class="btn-icon" id="expand-viz" title="Expand Visualization">
+                                <i class="fas fa-expand-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="visualization-container">
+                        <div class="disk-track">
+                            <div class="disk-head" id="disk-head"></div>
+                            <div class="track-markers">
+                                <span>0</span>
+                                <span>50</span>
+                                <span>100</span>
+                                <span>150</span>
+                                <span>199</span>
+                            </div>
+                        </div>
+                        <div class="request-queue" id="request-queue">
+                            <!-- Request indicators will be added here dynamically -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Metrics Section -->
+                <section class="metrics-section">
+                    <div class="section-header">
+                        <h2>Performance Metrics</h2>
+                    </div>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h3>Average Seek Time</h3>
+                                <p id="avg-seek-time">0 ms</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h3>Total Head Movement</h3>
+                                <p id="total-movement">0 cylinders</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h3>Queue Length</h3>
+                                <p id="queue-length">0 requests</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-tachometer-alt"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h3>Throughput</h3>
+                                <p id="throughput">0 req/s</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Algorithm Section -->
+                <section class="algorithm-section">
+                    <div class="section-header">
+                        <h2>Algorithm Prediction</h2>
+                    </div>
+                    <div class="algorithm-container">
+                        <div class="algorithm-card active" data-algorithm="FCFS">
+                            <div class="algorithm-header">
+                                <h3>FCFS</h3>
+                                <div class="algorithm-icon">
+                                    <i class="fas fa-sort-numeric-down"></i>
+                                </div>
+                            </div>
+                            <div class="algorithm-description">
+                                <p>First Come First Serve</p>
+                                <div class="confidence-bar">
+                                    <div class="confidence-level" style="width: 25%"></div>
+                                </div>
+                                <span class="confidence-text">25% Confidence</span>
+                            </div>
+                        </div>
+                        <div class="algorithm-card" data-algorithm="SSTF">
+                            <div class="algorithm-header">
+                                <h3>SSTF</h3>
+                                <div class="algorithm-icon">
+                                    <i class="fas fa-compress-alt"></i>
+                                </div>
+                            </div>
+                            <div class="algorithm-description">
+                                <p>Shortest Seek Time First</p>
+                                <div class="confidence-bar">
+                                    <div class="confidence-level" style="width: 25%"></div>
+                                </div>
+                                <span class="confidence-text">25% Confidence</span>
+                            </div>
+                        </div>
+                        <div class="algorithm-card" data-algorithm="SCAN">
+                            <div class="algorithm-header">
+                                <h3>SCAN</h3>
+                                <div class="algorithm-icon">
+                                    <i class="fas fa-arrows-alt-h"></i>
+                                </div>
+                            </div>
+                            <div class="algorithm-description">
+                                <p>Elevator Algorithm</p>
+                                <div class="confidence-bar">
+                                    <div class="confidence-level" style="width: 25%"></div>
+                                </div>
+                                <span class="confidence-text">25% Confidence</span>
+                            </div>
+                        </div>
+                        <div class="algorithm-card" data-algorithm="LOOK">
+                            <div class="algorithm-header">
+                                <h3>LOOK</h3>
+                                <div class="algorithm-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                            </div>
+                            <div class="algorithm-description">
+                                <p>Modified SCAN Algorithm</p>
+                                <div class="confidence-bar">
+                                    <div class="confidence-level" style="width: 25%"></div>
+                                </div>
+                                <span class="confidence-text">25% Confidence</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Request Details Section -->
+                <section class="details-section">
+                    <div class="section-header">
+                        <h2>Current Request Details</h2>
+                    </div>
+                    <div class="details-container">
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Queue Length:</div>
+                                <div class="detail-value" id="detail-queue-length">0</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Head Position:</div>
+                                <div class="detail-value" id="detail-head-position">0</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Request Spread:</div>
+                                <div class="detail-value" id="detail-request-spread">0</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Arrival Rate:</div>
+                                <div class="detail-value" id="detail-arrival-rate">0 req/s</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Real-Time Requests:</div>
+                                <div class="detail-value" id="detail-real-time">0</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Last Direction:</div>
+                                <div class="detail-value" id="detail-direction">N/A</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Read/Write Ratio:</div>
+                                <div class="detail-value" id="detail-rw-ratio">0:0</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Avg Wait Time:</div>
+                                <div class="detail-value" id="detail-wait-time">0 ms</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="section-header">
+                    <h2>Simulation Controls</h2>
+                </div>
+                <div class="control-buttons">
+                    <button id="start-btn" class="btn btn-primary">
+                        <i class="fas fa-play"></i>
+                        <span>Start Simulation</span>
+                    </button>
+                    <button id="pause-btn" class="btn btn-secondary" disabled>
+                        <i class="fas fa-pause"></i>
+                        <span>Pause</span>
+                    </button>
+                    <button id="step-btn" class="btn btn-secondary">
+                        <i class="fas fa-step-forward"></i>
+                        <span>Step</span>
+                    </button>
+                    <button id="reset-btn" class="btn btn-secondary">
+                        <i class="fas fa-redo"></i>
+                        <span>Reset</span>
+                    </button>
+                </div>
+                <div class="control-settings">
+                    <div class="setting-group">
+                        <label for="speed-control">Simulation Speed</label>
+                        <div class="range-control">
+                            <input type="range" id="speed-control" min="1" max="10" value="5">
+                            <div class="range-value" id="speed-value">5x</div>
+                        </div>
+                    </div>
+                    <div class="setting-group">
+                        <label for="request-density">Request Density</label>
+                        <div class="range-control">
+                            <input type="range" id="request-density" min="1" max="10" value="5">
+                            <div class="range-value" id="density-value">Medium</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="advanced-controls">
+                    <button id="update-model-btn" class="btn btn-outline">
+                        <i class="fas fa-sync-alt"></i>
+                        <span>Update Model</span>
+                    </button>
+                    <button id="export-btn" class="btn btn-outline">
+                        <i class="fas fa-file-export"></i>
+                        <span>Export Data</span>
+                    </button>
+                </div>
+                <div class="simulation-stats">
+                    <div class="stat-item">
+                        <div class="stat-label">Status:</div>
+                        <div class="stat-value" id="sim-status">Ready</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Elapsed Time:</div>
+                        <div class="stat-value" id="elapsed-time">00:00:00</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Requests Processed:</div>
+                        <div class="stat-value" id="requests-processed">0</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal for expanded visualization -->
+        <div class="modal" id="visualization-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Disk Head Movement - Detailed View</h2>
+                    <button class="close-modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="expanded-visualization">
+                        <div class="disk-track expanded">
+                            <div class="disk-head" id="expanded-disk-head"></div>
+                            <div class="track-markers">
+                                <span>0</span>
+                                <span>25</span>
+                                <span>50</span>
+                                <span>75</span>
+                                <span>100</span>
+                                <span>125</span>
+                                <span>150</span>
+                                <span>175</span>
+                                <span>199</span>
+                            </div>
+                        </div>
+                        <div class="request-queue expanded" id="expanded-request-queue">
+                            <!-- Request indicators will be added here dynamically -->
+                        </div>
+                    </div>
+                    <div class="visualization-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--primary-color)"></div>
+                            <div class="legend-text">Current Head Position</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--accent-color)"></div>
+                            <div class="legend-text">Pending Requests</div>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: var(--success-color)"></div>
+                            <div class="legend-text">Processed Requests</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications Container -->
+        <div class="toast-container" id="toast-container"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Theme Toggle
+            const themeSwitch = document.getElementById('theme-switch');
+            
+            // Check for saved theme preference or use preferred color scheme
+            const savedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                document.body.classList.add('dark-theme');
+                themeSwitch.checked = true;
+            }
+            
+            themeSwitch.addEventListener('change', function() {
+                if (this.checked) {
+                    document.body.classList.add('dark-theme');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.remove('dark-theme');
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+            
+            // Simulation Variables
+            let isSimulating = false;
+            let simulationInterval;
+            let elapsedTime = 0;
+            let requestsProcessed = 0;
+            let simulationSpeed = 5;
+            let requestDensity = 5;
+            let currentHeadPosition = 0;
+            let totalHeadMovement = 0;
+            let queueLength = 0;
+            let requestSpread = 0;
+            let arrivalRate = 0;
+            let realTimeRequests = 0;
+            let lastDirection = 0;
+            let readWriteRatio = 0;
+            let avgWaitTime = 0;
+            let currentAlgorithm = 'FCFS';
+            let confidenceScores = {
+                'FCFS': 25,
+                'SSTF': 25,
+                'SCAN': 25,
+                'LOOK': 25
+            };
+            
+            // DOM Elements
+            const startBtn = document.getElementById('start-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            const stepBtn = document.getElementById('step-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const updateModelBtn = document.getElementById('update-model-btn');
+            const exportBtn = document.getElementById('export-btn');
+            const speedControl = document.getElementById('speed-control');
+            const speedValue = document.getElementById('speed-value');
+            const requestDensityControl = document.getElementById('request-density');
+            const densityValue = document.getElementById('density-value');
+            const simStatus = document.getElementById('sim-status');
+            const elapsedTimeDisplay = document.getElementById('elapsed-time');
+            const requestsProcessedDisplay = document.getElementById('requests-processed');
+            const diskHead = document.getElementById('disk-head');
+            const expandedDiskHead = document.getElementById('expanded-disk-head');
+            const requestQueue = document.getElementById('request-queue');
+            const expandedRequestQueue = document.getElementById('expanded-request-queue');
+            const expandVizBtn = document.getElementById('expand-viz');
+            const vizModal = document.getElementById('visualization-modal');
+            const closeModalBtn = document.querySelector('.close-modal');
+            const algorithmCards = document.querySelectorAll('.algorithm-card');
+            const toastContainer = document.getElementById('toast-container');
+            
+            // Metrics Elements
+            const avgSeekTimeDisplay = document.getElementById('avg-seek-time');
+            const totalMovementDisplay = document.getElementById('total-movement');
+            const queueLengthDisplay = document.getElementById('queue-length');
+            const throughputDisplay = document.getElementById('throughput');
+            
+            // Detail Elements
+            const detailQueueLength = document.getElementById('detail-queue-length');
+            const detailHeadPosition = document.getElementById('detail-head-position');
+            const detailRequestSpread = document.getElementById('detail-request-spread');
+            const detailArrivalRate = document.getElementById('detail-arrival-rate');
+            const detailRealTime = document.getElementById('detail-real-time');
+            const detailDirection = document.getElementById('detail-direction');
+            const detailRwRatio = document.getElementById('detail-rw-ratio');
+            const detailWaitTime = document.getElementById('detail-wait-time');
+            
+            // Initialize UI
+            updateSpeedDisplay();
+            updateDensityDisplay();
+            
+            // Event Listeners
+            startBtn.addEventListener('click', toggleSimulation);
+            pauseBtn.addEventListener('click', pauseSimulation);
+            stepBtn.addEventListener('click', stepSimulation);
+            resetBtn.addEventListener('click', resetSimulation);
+            updateModelBtn.addEventListener('click', updateModel);
+            exportBtn.addEventListener('click', exportData);
+            speedControl.addEventListener('input', updateSpeedDisplay);
+            requestDensityControl.addEventListener('input', updateDensityDisplay);
+            expandVizBtn.addEventListener('click', openVisualizationModal);
+            closeModalBtn.addEventListener('click', closeVisualizationModal);
+            
+            algorithmCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    algorithmCards.forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    currentAlgorithm = card.getAttribute('data-algorithm');
+                    showToast('Algorithm Changed', `Switched to ${currentAlgorithm} algorithm`, 'info');
+                });
+            });
+            
+            // Functions
+            function toggleSimulation() {
+                if (!isSimulating) {
+                    startSimulation();
+                } else {
+                    pauseSimulation();
+                }
+            }
+            
+            function startSimulation() {
+                isSimulating = true;
+                startBtn.innerHTML = '<i class="fas fa-pause"></i><span>Pause</span>';
+                pauseBtn.disabled = false;
+                simStatus.textContent = 'Running';
+                simStatus.style.color = 'var(--success-color)';
+                
+                simulationInterval = setInterval(() => {
+                    stepSimulation();
+                    elapsedTime += 1;
+                    updateElapsedTimeDisplay();
+                }, 1000 / simulationSpeed);
+                
+                showToast('Simulation Started', 'The disk scheduling simulation is now running', 'success');
+            }
+            
+            function pauseSimulation() {
+                isSimulating = false;
+                clearInterval(simulationInterval);
+                startBtn.innerHTML = '<i class="fas fa-play"></i><span>Resume</span>';
+                pauseBtn.disabled = true;
+                simStatus.textContent = 'Paused';
+                simStatus.style.color = 'var(--warning-color)';
+                
+                showToast('Simulation Paused', 'The simulation has been paused', 'warning');
+            }
+            
+            function stepSimulation() {
+                // Generate new disk request data
+                generateData();
+                
+                // Update UI with new data
+                updateUI();
+                
+                // Process a request
+                processRequest();
+                
+                // Update metrics
+                updateMetrics();
+            }
+            
+            function resetSimulation() {
+                isSimulating = false;
+                clearInterval(simulationInterval);
+                startBtn.innerHTML = '<i class="fas fa-play"></i><span>Start Simulation</span>';
+                pauseBtn.disabled = true;
+                simStatus.textContent = 'Ready';
+                simStatus.style.color = 'var(--text-primary)';
+                
+                // Reset variables
+                elapsedTime = 0;
+                requestsProcessed = 0;
+                totalHeadMovement = 0;
+                currentHeadPosition = 0;
+                
+                // Clear visualizations
+                requestQueue.innerHTML = '';
+                expandedRequestQueue.innerHTML = '';
+                
+                // Update displays
+                updateElapsedTimeDisplay();
+                requestsProcessedDisplay.textContent = '0';
+                updateDiskHeadPosition();
+                updateMetrics();
+                
+                showToast('Simulation Reset', 'All simulation data has been reset', 'info');
+            }
+            
+            function generateData() {
+                queueLength = Math.floor(Math.random() * 100) + 1;
+                requestSpread = Math.floor(Math.random() * 170) + 10;
+                arrivalRate = (Math.random() * 9.9) + 0.1;
+                realTimeRequests = Math.floor(Math.random() * 6);
+                lastDirection = Math.floor(Math.random() * 2);
+                readWriteRatio = (Math.random() * 0.9) + 0.1;
+                avgWaitTime = (Math.random() * 49) + 1;
+                
+                // Determine algorithm based on features
+                let newAlgorithm;
+                if (requestSpread < 30) {
+                    newAlgorithm = 'SSTF';
+                } else if (realTimeRequests > 3) {
+                    newAlgorithm = 'FCFS';
+                } else if (lastDirection === 1) {
+                    newAlgorithm = 'SCAN';
+                } else {
+                    newAlgorithm = 'LOOK';
+                }
+                
+                // Update confidence scores
+                updateConfidenceScores(newAlgorithm);
+                
+                // Generate random requests based on density
+                generateRandomRequests();
+            }
+            
+            function updateUI() {
+                // Update detail section
+                detailQueueLength.textContent = queueLength;
+                detailHeadPosition.textContent = currentHeadPosition;
+                detailRequestSpread.textContent = requestSpread;
+                detailArrivalRate.textContent = arrivalRate.toFixed(1) + ' req/s';
+                detailRealTime.textContent = realTimeRequests;
+                detailDirection.textContent = lastDirection === 1 ? 'Inward' : 'Outward';
+                detailRwRatio.textContent = readWriteRatio.toFixed(2);
+                detailWaitTime.textContent = avgWaitTime.toFixed(1) + ' ms';
+                
+                // Update algorithm confidence displays
+                for (const algorithm in confidenceScores) {
+                    const card = document.querySelector(`.algorithm-card[data-algorithm="${algorithm}"]`);
+                    const confidenceBar = card.querySelector('.confidence-level');
+                    const confidenceText = card.querySelector('.confidence-text');
+                    
+                    confidenceBar.style.width = `${confidenceScores[algorithm]}%`;
+                    confidenceText.textContent = `${confidenceScores[algorithm]}% Confidence`;
+                    
+                    // Highlight the algorithm with highest confidence
+                    if (algorithm === getHighestConfidenceAlgorithm()) {
+                        if (!card.classList.contains('active')) {
+                            algorithmCards.forEach(c => c.classList.remove('active'));
+                            card.classList.add('active');
+                            currentAlgorithm = algorithm;
+                        }
+                    }
+                }
+            }
+            
+            function processRequest() {
+                // Simulate processing a request
+                const newPosition = Math.floor(Math.random() * 200);
+                const movement = Math.abs(currentHeadPosition - newPosition);
+                totalHeadMovement += movement;
+                currentHeadPosition = newPosition;
+                
+                // Update disk head position
+                updateDiskHeadPosition();
+                
+                // Increment processed requests counter
+                requestsProcessed++;
+                requestsProcessedDisplay.textContent = requestsProcessed;
+            }
+            
+            function updateMetrics() {
+                // Calculate and update metrics
+                const avgSeekTime = requestsProcessed > 0 ? (totalHeadMovement / requestsProcessed).toFixed(2) : '0';
+                const throughput = elapsedTime > 0 ? (requestsProcessed / (elapsedTime / 60)).toFixed(2) : '0';
+                
+                avgSeekTimeDisplay.textContent = avgSeekTime + ' ms';
+                totalMovementDisplay.textContent = totalHeadMovement + ' cylinders';
+                queueLengthDisplay.textContent = queueLength + ' requests';
+                throughputDisplay.textContent = throughput + ' req/s';
+            }
+            
+            function updateDiskHeadPosition() {
+                // Calculate position as percentage of track
+                const positionPercent = (currentHeadPosition / 199) * 100;
+                
+                // Update main visualization
+                diskHead.style.left = `${positionPercent}%`;
+                
+                // Update expanded visualization if modal is open
+                expandedDiskHead.style.left = `${positionPercent}%`;
+                
+                // Update detail display
+                detailHeadPosition.textContent = currentHeadPosition;
+            }
+            
+            function generateRandomRequests() {
+                // Clear previous requests
+                requestQueue.innerHTML = '';
+                expandedRequestQueue.innerHTML = '';
+                
+                // Generate new requests based on density
+                const numRequests = 5 + Math.floor(requestDensity * 2);
+                
+                for (let i = 0; i < numRequests; i++) {
+                    const position = Math.floor(Math.random() * 200);
+                    const positionPercent = (position / 199) * 100;
+                    
+                    // Create request indicator for main visualization
+                    const requestIndicator = document.createElement('div');
+                    requestIndicator.className = 'request-indicator';
+                    requestIndicator.style.left = `${positionPercent}%`;
+                    requestQueue.appendChild(requestIndicator);
+                    
+                    // Create request indicator for expanded visualization
+                    const expandedRequestIndicator = document.createElement('div');
+                    expandedRequestIndicator.className = 'request-indicator';
+                    expandedRequestIndicator.style.left = `${positionPercent}%`;
+                    expandedRequestQueue.appendChild(expandedRequestIndicator);
+                    
+                    // Randomly mark some as processed
+                    if (Math.random() > 0.7) {
+                        requestIndicator.classList.add('processed');
+                        expandedRequestIndicator.classList.add('processed');
+                    }
+                }
+            }
+            
+            function updateConfidenceScores(predictedAlgorithm) {
+                // Reset all scores to a base value
+                for (const algorithm in confidenceScores) {
+                    confidenceScores[algorithm] = 15;
+                }
+                
+                // Boost the predicted algorithm
+                confidenceScores[predictedAlgorithm] = 70;
+                
+                // Randomly adjust other scores slightly
+                for (const algorithm in confidenceScores) {
+                    if (algorithm !== predictedAlgorithm) {
+                        confidenceScores[algorithm] += Math.floor(Math.random() * 10);
+                    }
+                }
+            }
+            
+            function getHighestConfidenceAlgorithm() {
+                let highest = '';
+                let highestScore = 0;
+                
+                for (const algorithm in confidenceScores) {
+                    if (confidenceScores[algorithm] > highestScore) {
+                        highest = algorithm;
+                        highestScore = confidenceScores[algorithm];
+                    }
+                }
+                
+                return highest;
+            }
+            
+            function updateSpeedDisplay() {
+                simulationSpeed = parseInt(speedControl.value);
+                speedValue.textContent = `${simulationSpeed}x`;
+                
+                // Update interval if simulation is running
+                if (isSimulating) {
+                    clearInterval(simulationInterval);
+                    simulationInterval = setInterval(() => {
+                        stepSimulation();
+                        elapsedTime += 1;
+                        updateElapsedTimeDisplay();
+                    }, 1000 / simulationSpeed);
+                }
+            }
+            
+            function updateDensityDisplay() {
+                requestDensity = parseInt(requestDensityControl.value);
+                
+                let densityText;
+                if (requestDensity <= 3) {
+                    densityText = 'Low';
+                } else if (requestDensity <= 7) {
+                    densityText = 'Medium';
+                } else {
+                    densityText = 'High';
+                }
+                
+                densityValue.textContent = densityText;
+            }
+            
+            function updateElapsedTimeDisplay() {
+                const hours = Math.floor(elapsedTime / 3600);
+                const minutes = Math.floor((elapsedTime % 3600) / 60);
+                const seconds = elapsedTime % 60;
+                
+                const formattedTime = [
+                    hours.toString().padStart(2, '0'),
+                    minutes.toString().padStart(2, '0'),
+                    seconds.toString().padStart(2, '0')
+                ].join(':');
+                
+                elapsedTimeDisplay.textContent = formattedTime;
+            }
+            
+            function openVisualizationModal() {
+                vizModal.classList.add('active');
+            }
+            
+            function closeVisualizationModal() {
+                vizModal.classList.remove('active');
+            }
+            
+            function updateModel() {
+                // Simulate model update
+                simStatus.textContent = 'Updating Model...';
+                
+                setTimeout(() => {
+                    simStatus.textContent = isSimulating ? 'Running' : 'Ready';
+                    showToast('Model Updated', 'The disk scheduling prediction model has been updated successfully', 'success');
+                }, 2000);
+            }
+            
+            function exportData() {
+                // Simulate data export
+                showToast('Data Exported', 'Simulation data has been exported successfully', 'success');
+            }
+            
+            function showToast(title, message, type = 'info') {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                let iconClass;
+                switch (type) {
+                    case 'success':
+                        iconClass = 'fa-check-circle';
+                        break;
+                    case 'warning':
+                        iconClass = 'fa-exclamation-triangle';
+                        break;
+                    case 'error':
+                        iconClass = 'fa-times-circle';
+                        break;
+                    default:
+                        iconClass = 'fa-info-circle';
+                }
+                
+                toast.innerHTML = `
+                    <div class="toast-icon">
+                        <i class="fas ${iconClass}"></i>
+                    </div>
+                    <div class="toast-content">
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                toastContainer.appendChild(toast);
+                
+                // Add event listener to close button
+                toast.querySelector('.toast-close').addEventListener('click', () => {
+                    toast.remove();
+                });
+                
+                // Auto remove after 3 seconds
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 3000);
+            }
+            
+            // Initialize with a step to show some data
+            stepSimulation();
+        });
+    </script>
+</body>
+</html>
